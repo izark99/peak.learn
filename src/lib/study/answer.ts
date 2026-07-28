@@ -74,6 +74,30 @@ export function isNearMiss(response: string, expected: string): boolean {
   return editDistance(a, b) <= allowed;
 }
 
+/**
+ * A seeded pseudo-random generator (mulberry32).
+ *
+ * Question sets are built during render, where `Math.random` is impure: a
+ * re-render would reshuffle the options under the learner's cursor. Seeding
+ * from a stable per-session id makes the same set come out every time while
+ * still differing between sessions.
+ */
+export function createSeededRandom(seed: string): () => number {
+  let state = 2166136261;
+  for (let i = 0; i < seed.length; i += 1) {
+    state ^= seed.charCodeAt(i);
+    state = Math.imul(state, 16777619);
+  }
+
+  return () => {
+    state |= 0;
+    state = (state + 0x6d2b79f5) | 0;
+    let t = Math.imul(state ^ (state >>> 15), 1 | state);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 /** Deterministic shuffle when given a seeded `random`; Math.random otherwise. */
 export function shuffle<T>(items: T[], random: () => number = Math.random): T[] {
   const copy = [...items];

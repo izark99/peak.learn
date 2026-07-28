@@ -119,9 +119,76 @@ export async function finishStudySession({
     ended_at: new Date().toISOString(),
   });
 
+  if (deckId) {
+    await recordAssignmentProgress({
+      userId,
+      deckId,
+      cardsStudied,
+      correctCount,
+    });
+  }
+
   const streak = await touchStreak(profile);
 
   revalidatePath("/app");
   revalidatePath("/app/decks");
   return { streak };
+}
+
+/**
+ * Mirror a study session into assignment_progress for any class assignment
+ * covering this deck.
+ *
+ * Teachers can't read a student's review_states — those are private under RLS —
+ * so progress can't be derived on the teacher's side. The student writes this
+ * row themselves as they study, which is the only path that respects the
+ * privacy boundary.
+ */
+async function recordAssignmentProgress({
+  userId,
+  deckId,
+  cardsStudied,
+  correctCount,
+}: {
+  userId: string;
+  deckId: string;
+  cardsStudied: number;
+  correctCount: number;
+}) {
+  const supabase = await createClient();
+
+  // RLS returns only assignments in classes this user belongs to.
+  const { data: assignments } = await supabase
+    .from("class_assignments")
+    .select("id")
+    .eq("deck_id", deckId);
+
+  if (!assignments || assignments.length === 0) return;
+
+  for (const assignment of assignments) {
+    const { data: existing } = await supabase
+      .from("assignment_progress")
+      .select("cards_completed, accuracy")
+      .eq("assignment_id", assignment.id)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    const priorCards = existing?.cards_completed ?? 0;
+    const totalCards = priorCards + cardsStudied;
+
+    // Running accuracy over every card the student has answered for this
+    // assignment, not just the latest session.
+    const priorCorrect = Math.round((existing?.accuracy ?? 0) * priorCards);
+    const accuracy = totalCards === 0 ? 0 : (priorCorrect + correctCount) / totalCards;
+
+    await supabase.from("assignment_progress").upsert(
+      {
+        assignment_id: assignment.id,
+        user_id: userId,
+        cards_completed: totalCards,
+        accuracy: Math.min(1, Math.max(0, accuracy)),
+      },
+      { onConflict: "assignment_id,user_id" },
+    );
+  }
 }

@@ -6,7 +6,8 @@ import { Volume2 } from "lucide-react";
 import { Button, Input } from "@/components/ui";
 import type { ModeProps } from "@/components/study/types";
 import { isAnswerCorrect, isNearMiss } from "@/lib/study/answer";
-import { isSpeechSynthesisSupported, speak } from "@/lib/speech/tts";
+import { speak } from "@/lib/speech/tts";
+import { useSpeechSynthesisSupport } from "@/lib/speech/use-support";
 import { cn } from "@/lib/utils";
 
 /**
@@ -19,14 +20,9 @@ export function DictationMode({ cards, speechLang, onAnswer, onFinish }: ModePro
   const [feedback, setFeedback] = useState<
     { correct: boolean; message: string } | null
   >(null);
-  const [supported, setSupported] = useState(true);
+  const supported = useSpeechSynthesisSupport();
 
   const card = cards[index];
-
-  // Checked in an effect so server and first client render agree.
-  useEffect(() => {
-    setSupported(isSpeechSynthesisSupported());
-  }, []);
 
   const play = useCallback(() => {
     if (card) void speak(card.term, speechLang);

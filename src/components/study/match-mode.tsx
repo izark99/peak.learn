@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui";
 import type { ModeProps, StudyCard } from "@/components/study/types";
-import { shuffle } from "@/lib/study/answer";
+import { createSeededRandom, shuffle } from "@/lib/study/answer";
 import { cn } from "@/lib/utils";
 
 type Tile = {
@@ -23,16 +23,24 @@ const ROUND_SIZE = 6;
  * shaky card out to a long interval.
  */
 export function MatchMode({ cards, onAnswer, onFinish }: ModeProps) {
+  // Seeded so the grid doesn't rearrange itself mid-tap on a re-render.
+  const seed = useId();
+
   const round = useMemo<StudyCard[]>(
-    () => shuffle(cards).slice(0, ROUND_SIZE),
-    [cards],
+    () => shuffle(cards, createSeededRandom(`${seed}-round`)).slice(0, ROUND_SIZE),
+    [cards, seed],
   );
 
   const tiles = useMemo<Tile[]>(
     () =>
       shuffle(
         round.flatMap((card) => [
-          { key: `${card.id}-term`, cardId: card.id, text: card.term, side: "term" as const },
+          {
+            key: `${card.id}-term`,
+            cardId: card.id,
+            text: card.term,
+            side: "term" as const,
+          },
           {
             key: `${card.id}-translation`,
             cardId: card.id,
@@ -40,8 +48,9 @@ export function MatchMode({ cards, onAnswer, onFinish }: ModeProps) {
             side: "translation" as const,
           },
         ]),
+        createSeededRandom(`${seed}-tiles`),
       ),
-    [round],
+    [round, seed],
   );
 
   const [selected, setSelected] = useState<Tile | null>(null);

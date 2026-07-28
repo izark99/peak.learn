@@ -9,11 +9,8 @@ import {
   startConversation,
 } from "@/app/app/speak/actions";
 import { Button, Input } from "@/components/ui";
-import {
-  isSpeechRecognitionSupported,
-  listenOnce,
-  RecognitionError,
-} from "@/lib/speech/recognition";
+import { listenOnce, RecognitionError } from "@/lib/speech/recognition";
+import { useSpeechRecognitionSupport } from "@/lib/speech/use-support";
 import {
   scoreDelivery,
   scoreLabel,
@@ -140,8 +137,8 @@ export function Conversation({
   const [error, setError] = useState<string | null>(null);
   const [typed, setTyped] = useState("");
   const [usedTerms, setUsedTerms] = useState<Set<string>>(new Set());
-  const [micSupported, setMicSupported] = useState(true);
   const [ended, setEnded] = useState(false);
+  const micSupported = useSpeechRecognitionSupport();
 
   // The repeat-after-me drill: a target line plus the last attempt's score.
   const [drill, setDrill] = useState<{
@@ -153,10 +150,6 @@ export function Conversation({
   const stopRef = useRef<(() => void) | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const started = useRef(false);
-
-  useEffect(() => {
-    setMicSupported(isSpeechRecognitionSupported());
-  }, []);
 
   // Open the session once. The ref guard keeps React's development
   // double-mount from creating two sessions.

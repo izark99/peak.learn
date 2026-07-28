@@ -574,7 +574,13 @@ export type Database = {
       };
     };
     Views: { [_ in never]: never };
-    Functions: { [_ in never]: never };
+    Functions: {
+      join_class_by_code: {
+        Args: { p_join_code: string };
+        // Null when no active class has that code.
+        Returns: string | null;
+      };
+    };
     Enums: { [_ in never]: never };
     CompositeTypes: { [_ in never]: never };
   };

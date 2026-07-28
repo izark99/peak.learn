@@ -1,10 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 
 import { Button, Input } from "@/components/ui";
 import type { ModeProps, StudyCard } from "@/components/study/types";
-import { buildChoices, isAnswerCorrect, isNearMiss } from "@/lib/study/answer";
+import {
+  buildChoices,
+  createSeededRandom,
+  isAnswerCorrect,
+  isNearMiss,
+} from "@/lib/study/answer";
 import { cn } from "@/lib/utils";
 
 type Phase = "choice" | "typed";
@@ -24,6 +29,7 @@ export function LearnMode({ cards, onAnswer, onFinish }: ModeProps) {
   >(null);
 
   const current = queue[0];
+  const seed = useId();
 
   const choices = useMemo(() => {
     if (!current || current.phase !== "choice") return [];
@@ -33,8 +39,11 @@ export function LearnMode({ cards, onAnswer, onFinish }: ModeProps) {
         .filter((card) => card.id !== current.card.id)
         .map((card) => card.translation),
       confusables: current.card.confusables,
+      // Seeded per card so the options keep their positions while the learner
+      // is looking at them, but differ between cards.
+      random: createSeededRandom(`${seed}-${current.card.id}`),
     });
-  }, [cards, current]);
+  }, [cards, current, seed]);
 
   if (!current) return null;
 

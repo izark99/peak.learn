@@ -1,10 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 
 import { Button, Input } from "@/components/ui";
 import type { ModeProps, StudyCard } from "@/components/study/types";
-import { buildChoices, isAnswerCorrect, shuffle } from "@/lib/study/answer";
+import {
+  buildChoices,
+  createSeededRandom,
+  isAnswerCorrect,
+  shuffle,
+} from "@/lib/study/answer";
 import { cn } from "@/lib/utils";
 
 type Question =
@@ -18,11 +23,16 @@ type Question =
  * so a mid-test bail-out doesn't half-grade the deck.
  */
 export function TestMode({ cards, onAnswer, onFinish }: ModeProps) {
-  const questions = useMemo<Question[]>(() => {
-    const others = (card: StudyCard) =>
-      cards.filter((entry) => entry.id !== card.id);
+  // A stable per-instance seed. The paper is built during render, so it has to
+  // be idempotent — Math.random would reshuffle the questions under the
+  // learner's cursor on any incidental re-render.
+  const seed = useId();
 
-    return shuffle(cards).map((card, index) => {
+  const questions = useMemo<Question[]>(() => {
+    const random = createSeededRandom(seed);
+    const others = (card: StudyCard) => cards.filter((entry) => entry.id !== card.id);
+
+    return shuffle(cards, random).map((card, index) => {
       const pool = others(card).map((entry) => entry.translation);
 
       if (index % 3 === 0) {
@@ -33,6 +43,7 @@ export function TestMode({ cards, onAnswer, onFinish }: ModeProps) {
             correct: card.translation,
             pool,
             confusables: card.confusables,
+            random,
           }),
         };
       }
@@ -42,8 +53,8 @@ export function TestMode({ cards, onAnswer, onFinish }: ModeProps) {
       }
 
       // Half of the true/false questions show a deliberately wrong pairing.
-      const isTrue = Math.random() < 0.5;
-      const wrong = pool.length > 0 ? shuffle(pool)[0] : `${card.translation}?`;
+      const isTrue = random() < 0.5;
+      const wrong = pool.length > 0 ? shuffle(pool, random)[0] : `${card.translation}?`;
       return {
         kind: "boolean",
         card,
@@ -51,7 +62,7 @@ export function TestMode({ cards, onAnswer, onFinish }: ModeProps) {
         isTrue,
       };
     });
-  }, [cards]);
+  }, [cards, seed]);
 
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [graded, setGraded] = useState<null | {

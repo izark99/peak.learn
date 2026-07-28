@@ -257,6 +257,9 @@ export async function generateConversationReply({
       "two short sentences — this is meant to be said out loud. Stay in character and",
       "always end in a way that invites the learner to respond.",
       "",
+      `Write reply_translation in ${languageName(nativeLanguage)} — it is the safety net`,
+      "for a learner who did not follow the reply.",
+      "",
       requiredTerms.length > 0
         ? `Steer the conversation so the learner has reason to use: ${requiredTerms.join(", ")}`
         : "",

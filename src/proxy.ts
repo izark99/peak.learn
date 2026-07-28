@@ -1,8 +1,15 @@
 import type { NextRequest } from "next/server";
 
-import { updateSession } from "@/lib/supabase/middleware";
+import { updateSession } from "@/lib/supabase/session";
 
-export async function middleware(request: NextRequest) {
+/**
+ * Runs before every matched request: refreshes the Supabase auth token and
+ * keeps unauthenticated users out of /app.
+ *
+ * Next 16 renamed this file convention from `middleware` to `proxy`, and the
+ * exported function has to be named to match.
+ */
+export async function proxy(request: NextRequest) {
   return updateSession(request);
 }
 

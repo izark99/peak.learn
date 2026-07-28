@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildChoices,
+  createSeededRandom,
   editDistance,
   isAnswerCorrect,
   isNearMiss,
@@ -95,6 +96,49 @@ describe("editDistance", () => {
     expect(editDistance("kitten", "sitting")).toBe(3);
     expect(editDistance("", "abc")).toBe(3);
     expect(editDistance("abc", "")).toBe(3);
+  });
+});
+
+describe("createSeededRandom", () => {
+  it("produces the same sequence for the same seed", () => {
+    const a = createSeededRandom("card-1");
+    const b = createSeededRandom("card-1");
+
+    const first = Array.from({ length: 10 }, () => a());
+    const second = Array.from({ length: 10 }, () => b());
+
+    expect(first).toEqual(second);
+  });
+
+  it("produces different sequences for different seeds", () => {
+    const a = createSeededRandom("card-1");
+    const b = createSeededRandom("card-2");
+
+    expect(a()).not.toBe(b());
+  });
+
+  it("stays within [0, 1)", () => {
+    const random = createSeededRandom("seed");
+    for (let i = 0; i < 500; i += 1) {
+      const value = random();
+      expect(value).toBeGreaterThanOrEqual(0);
+      expect(value).toBeLessThan(1);
+    }
+  });
+
+  it("does not get stuck returning one value", () => {
+    const random = createSeededRandom("seed");
+    const values = new Set(Array.from({ length: 50 }, () => random()));
+
+    expect(values.size).toBeGreaterThan(40);
+  });
+
+  it("shuffles identically when seeded the same way", () => {
+    const items = [1, 2, 3, 4, 5, 6, 7, 8];
+
+    expect(shuffle(items, createSeededRandom("x"))).toEqual(
+      shuffle(items, createSeededRandom("x")),
+    );
   });
 });
 
