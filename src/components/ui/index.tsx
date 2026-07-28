@@ -29,6 +29,29 @@ const BUTTON_SIZES: Record<ButtonSize, string> = {
   lg: "h-12 px-6 text-base",
 };
 
+/**
+ * Button styling as a class string, so `<Link>` can be given the same look
+ * without nesting an anchor inside a button.
+ */
+export function buttonStyles({
+  variant = "primary",
+  size = "md",
+  className,
+}: {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  className?: string;
+} = {}) {
+  return cn(
+    "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors",
+    "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
+    "disabled:cursor-not-allowed disabled:opacity-50",
+    BUTTON_VARIANTS[variant],
+    BUTTON_SIZES[size],
+    className,
+  );
+}
+
 export function Button({
   className,
   variant = "primary",
@@ -38,19 +61,7 @@ export function Button({
   variant?: ButtonVariant;
   size?: ButtonSize;
 }) {
-  return (
-    <button
-      className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors",
-        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
-        "disabled:cursor-not-allowed disabled:opacity-50",
-        BUTTON_VARIANTS[variant],
-        BUTTON_SIZES[size],
-        className,
-      )}
-      {...props}
-    />
-  );
+  return <button className={buttonStyles({ variant, size, className })} {...props} />;
 }
 
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
