@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+/*
+ * peak.learn design tokens.
+ *
+ * Dark-first, the way the original app reads: near-black surfaces, a violet
+ * accent, and generous radii. Light mode is supported but secondary.
+ */
+@theme {
+  --color-canvas: #08080c;
+  --color-surface: #101018;
+  --color-surface-2: #16161f;
+  --color-border: #23232f;
+  --color-border-strong: #32323f;
+
+  --color-ink: #f4f4f6;
+  --color-ink-muted: #a0a0b0;
+  --color-ink-faint: #6c6c80;
+
+  --color-accent: #7c5cff;
+  --color-accent-hover: #6b4aef;
+  --color-accent-soft: #1c1733;
+
+  --color-success: #34d399;
+  --color-warning: #fbbf24;
+  --color-danger: #f87171;
+
+  /* Rating buttons, shared by every study mode. */
+  --color-again: #f87171;
+  --color-hard: #fbbf24;
+  --color-good: #34d399;
+  --color-easy: #60a5fa;
+
+  --radius-card: 1rem;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* The landing page's ambient glow. Purely decorative. */
+.aurora {
+  background-image:
+    radial-gradient(60rem 30rem at 15% -10%, rgba(124, 92, 255, 0.22), transparent 60%),
+    radial-gradient(45rem 25rem at 90% 0%, rgba(52, 211, 153, 0.12), transparent 60%);
+}
+
+/* Flashcard flip. Motion-reduced users get an instant swap instead. */
+.flip-scene {
+  perspective: 1400px;
+}
+
+.flip-inner {
+  transform-style: preserve-3d;
+  transition: transform 480ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.flip-inner[data-flipped="true"] {
+  transform: rotateY(180deg);
+}
+
+.flip-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.flip-face-back {
+  transform: rotateY(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flip-inner {
+    transition: none;
+  }
+}
+
+::selection {
+  background-color: var(--color-accent);
+  color: white;
+}
