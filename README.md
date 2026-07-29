@@ -55,14 +55,39 @@ they aren't reachable as PostgREST RPC endpoints.
 ## Tests
 
 ```bash
-npm test          # unit tests: scheduler, forecast, answer matching, pronunciation scoring
-npm run test:e2e  # Playwright; auth-dependent specs skip if Supabase is unreachable
-npm run build     # production build + type check
-npx eslint .      # lint
+npm test            # unit tests — fast, no network, no setup
+npm run test:watch  # same, re-running on save
+npm run test:e2e    # Playwright; starts its own dev server
+npm run build       # production build + type check
+npx eslint .        # lint
 ```
 
 The unit tests concentrate on the pure logic where a silent bug is expensive:
-the spaced-repetition scheduler, answer comparison, and pronunciation scoring.
+
+| File | Covers |
+|---|---|
+| `src/lib/srs/scheduler.test.ts` | SM-2 intervals, learning steps, lapses, ease floor, fuzz bounds |
+| `src/lib/srs/forecast.test.ts` | 7-day bucketing, overdue folding, timezone-safe day keys |
+| `src/lib/study/answer.test.ts` | Answer matching, near-misses, distractors, seeded shuffle |
+| `src/lib/speech/score.test.ts` | Pronunciation and delivery scoring, plus the degenerate cases |
+
+Narrowing a run:
+
+```bash
+npx vitest run src/lib/srs      # one directory
+npx vitest run -t "lapses"      # tests whose name matches
+```
+
+### End-to-end
+
+`npm run test:e2e` launches the dev server itself, so no second terminal is
+needed. Set `E2E_BASE_URL` to point at an already-running or deployed instance
+instead, and Playwright will skip starting one.
+
+The auth-dependent specs need to reach your Supabase project. When they can't,
+they **skip with an explicit reason** rather than failing — so a sandbox
+without egress to the project host reports 1 passed / 6 skipped instead of six
+opaque timeouts.
 
 ## A note on pronunciation scoring
 
